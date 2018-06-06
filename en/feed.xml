@@ -3,10 +3,10 @@
   <channel>
     <title></title>
     <description></description>
-    <link>https://cheeger.com/</link>
-    <atom:link href="https://cheeger.com/feed.xml" rel="self" type="application/rss+xml"/>
-    <pubDate>Thu, 07 Jun 2018 02:41:40 +1000</pubDate>
-    <lastBuildDate>Thu, 07 Jun 2018 02:41:40 +1000</lastBuildDate>
+    <link>https://cheeger.com/en/</link>
+    <atom:link href="https://cheeger.com/en/feed.xml" rel="self" type="application/rss+xml"/>
+    <pubDate>Thu, 07 Jun 2018 02:41:41 +1000</pubDate>
+    <lastBuildDate>Thu, 07 Jun 2018 02:41:41 +1000</lastBuildDate>
     <generator>Jekyll v3.8.1</generator>
     
       <item>
@@ -15,8 +15,8 @@
 &lt;p&gt;&lt;img src=&quot;/assets/images/posts/cryptography/keys.png&quot; alt=&quot;Cryptography&quot; /&gt;&lt;/p&gt;
 </description>
         <pubDate>Tue, 29 May 2018 00:00:00 +1000</pubDate>
-        <link>https://cheeger.com/develop/2018/05/29/understand-cryptography-in-one-minute.html</link>
-        <guid isPermaLink="true">https://cheeger.com/develop/2018/05/29/understand-cryptography-in-one-minute.html</guid>
+        <link>https://cheeger.com/en/develop/2018/05/29/understand-cryptography-in-one-minute.html</link>
+        <guid isPermaLink="true">https://cheeger.com/en/develop/2018/05/29/understand-cryptography-in-one-minute.html</guid>
         
         <category>cryptography,</category>
         
@@ -84,8 +84,8 @@ Enter file in which to save the key (/home/username/.ssh/id_rsa):
 
 </description>
         <pubDate>Sat, 19 May 2018 00:00:00 +1000</pubDate>
-        <link>https://cheeger.com/linux/2018/05/19/openssl.html</link>
-        <guid isPermaLink="true">https://cheeger.com/linux/2018/05/19/openssl.html</guid>
+        <link>https://cheeger.com/en/linux/2018/05/19/openssl.html</link>
+        <guid isPermaLink="true">https://cheeger.com/en/linux/2018/05/19/openssl.html</guid>
         
         <category>linux</category>
         
@@ -205,8 +205,8 @@ We can test by &lt;code class=&quot;highlighter-rouge&quot;&gt;curl&lt;/code&gt;
 &lt;p&gt;Enjoy you parse-server and parse-dashboard.&lt;/p&gt;
 </description>
         <pubDate>Sat, 19 May 2018 00:00:00 +1000</pubDate>
-        <link>https://cheeger.com/develop/2018/05/19/Install-parse-server-as-Baas.html</link>
-        <guid isPermaLink="true">https://cheeger.com/develop/2018/05/19/Install-parse-server-as-Baas.html</guid>
+        <link>https://cheeger.com/en/develop/2018/05/19/Install-parse-server-as-Baas.html</link>
+        <guid isPermaLink="true">https://cheeger.com/en/develop/2018/05/19/Install-parse-server-as-Baas.html</guid>
         
         <category>parse-server</category>
         
@@ -298,8 +298,8 @@ Use &lt;code class=&quot;highlighter-rouge&quot;&gt;git diff&lt;/code&gt; to car
 
 </description>
         <pubDate>Sat, 24 Mar 2018 00:00:00 +1100</pubDate>
-        <link>https://cheeger.com/develop/2018/03/24/Upgrade-from-rails-4-to-rails-5.html</link>
-        <guid isPermaLink="true">https://cheeger.com/develop/2018/03/24/Upgrade-from-rails-4-to-rails-5.html</guid>
+        <link>https://cheeger.com/en/develop/2018/03/24/Upgrade-from-rails-4-to-rails-5.html</link>
+        <guid isPermaLink="true">https://cheeger.com/en/develop/2018/03/24/Upgrade-from-rails-4-to-rails-5.html</guid>
         
         <category>rubyonrails</category>
         
@@ -602,8 +602,8 @@ in the above image, the aws managed policy include &lt;code class=&quot;highligh
 
 </description>
         <pubDate>Sat, 17 Mar 2018 00:00:00 +1100</pubDate>
-        <link>https://cheeger.com/develop/2018/03/17/Image-processing-with-AWS-lambda-+-S3-buckets.html</link>
-        <guid isPermaLink="true">https://cheeger.com/develop/2018/03/17/Image-processing-with-AWS-lambda-+-S3-buckets.html</guid>
+        <link>https://cheeger.com/en/develop/2018/03/17/Image-processing-with-AWS-lambda-+-S3-buckets.html</link>
+        <guid isPermaLink="true">https://cheeger.com/en/develop/2018/03/17/Image-processing-with-AWS-lambda-+-S3-buckets.html</guid>
         
         <category>AWS</category>
         
@@ -640,8 +640,8 @@ $ cat /proc/version
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 </description>
         <pubDate>Sun, 04 Mar 2018 00:00:00 +1100</pubDate>
-        <link>https://cheeger.com/linux/2018/03/04/common-linux-commands.html</link>
-        <guid isPermaLink="true">https://cheeger.com/linux/2018/03/04/common-linux-commands.html</guid>
+        <link>https://cheeger.com/en/linux/2018/03/04/common-linux-commands.html</link>
+        <guid isPermaLink="true">https://cheeger.com/en/linux/2018/03/04/common-linux-commands.html</guid>
         
         <category>linux</category>
         
@@ -712,8 +712,8 @@ $ cat /proc/version
 
 </description>
         <pubDate>Sun, 04 Mar 2018 00:00:00 +1100</pubDate>
-        <link>https://cheeger.com/develop/2018/03/04/Create-materialized-view-for-multiple-databases-for-rails.html</link>
-        <guid isPermaLink="true">https://cheeger.com/develop/2018/03/04/Create-materialized-view-for-multiple-databases-for-rails.html</guid>
+        <link>https://cheeger.com/en/develop/2018/03/04/Create-materialized-view-for-multiple-databases-for-rails.html</link>
+        <guid isPermaLink="true">https://cheeger.com/en/develop/2018/03/04/Create-materialized-view-for-multiple-databases-for-rails.html</guid>
         
         <category>rails</category>
         
@@ -838,8 +838,8 @@ goaccess * -o report.html
 
 </description>
         <pubDate>Fri, 26 Jan 2018 00:00:00 +1100</pubDate>
-        <link>https://cheeger.com/develop/2018/01/26/S3-Log-Analysis.html</link>
-        <guid isPermaLink="true">https://cheeger.com/develop/2018/01/26/S3-Log-Analysis.html</guid>
+        <link>https://cheeger.com/en/develop/2018/01/26/S3-Log-Analysis.html</link>
+        <guid isPermaLink="true">https://cheeger.com/en/develop/2018/01/26/S3-Log-Analysis.html</guid>
         
         <category>aws</category>
         
@@ -1050,8 +1050,8 @@ goaccess * -o report.html
 
 </description>
         <pubDate>Mon, 08 Jan 2018 00:00:00 +1100</pubDate>
-        <link>https://cheeger.com/general/2018/01/08/%E6%B8%A9%E5%B7%9E%E4%BA%BA%E4%B8%BA%E4%BB%80%E4%B9%88%E7%B2%BE%E4%BA%8E%E7%BB%8F%E5%95%86%E8%87%B4%E5%AF%8C.html</link>
-        <guid isPermaLink="true">https://cheeger.com/general/2018/01/08/%E6%B8%A9%E5%B7%9E%E4%BA%BA%E4%B8%BA%E4%BB%80%E4%B9%88%E7%B2%BE%E4%BA%8E%E7%BB%8F%E5%95%86%E8%87%B4%E5%AF%8C.html</guid>
+        <link>https://cheeger.com/en/general/2018/01/08/%E6%B8%A9%E5%B7%9E%E4%BA%BA%E4%B8%BA%E4%BB%80%E4%B9%88%E7%B2%BE%E4%BA%8E%E7%BB%8F%E5%95%86%E8%87%B4%E5%AF%8C.html</link>
+        <guid isPermaLink="true">https://cheeger.com/en/general/2018/01/08/%E6%B8%A9%E5%B7%9E%E4%BA%BA%E4%B8%BA%E4%BB%80%E4%B9%88%E7%B2%BE%E4%BA%8E%E7%BB%8F%E5%95%86%E8%87%B4%E5%AF%8C.html</guid>
         
         <category>知乎</category>
         
@@ -1107,8 +1107,8 @@ once it’s created, it will expose these methods:&lt;/p&gt;
 
 </description>
         <pubDate>Tue, 28 Nov 2017 00:00:00 +1100</pubDate>
-        <link>https://cheeger.com/develop/2017/11/28/understand-deferred-promise.html</link>
-        <guid isPermaLink="true">https://cheeger.com/develop/2017/11/28/understand-deferred-promise.html</guid>
+        <link>https://cheeger.com/en/develop/2017/11/28/understand-deferred-promise.html</link>
+        <guid isPermaLink="true">https://cheeger.com/en/develop/2017/11/28/understand-deferred-promise.html</guid>
         
         <category>jQuery</category>
         

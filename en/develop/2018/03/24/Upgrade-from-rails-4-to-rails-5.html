@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta content="/assets/images/favicon.png" itemprop="image">
+  <link rel="shortcut icon" type="image/png" href="/assets/images/favicon.png"/>
+  <title>Upgrade from Rails 4 to Rails 5</title>
+  <meta name="description" content="Upgrade from Rails 4 to Rails 5">
+
+  <link rel="stylesheet" href="/en/assets/css/main.css">
+  <link rel="canonical" href="https://cheeger.com/en/develop/2018/03/24/Upgrade-from-rails-4-to-rails-5.html">
+  <link rel="alternate" type="application/rss+xml" title="" href="https://cheeger.com/en/feed.xml">
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-112429779-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-112429779-1');
+  </script>
+</head>
+
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+    <a class="site-title" href="/en/">
+      <span data-icon="N" class="icon"></span>
+      Alba's Blog
+    </a>
+    <nav class="site-nav">
+      <div class="trigger">
+        
+          
+          <a class="page-link" href="/en/about/">
+            <span data-icon="j" class="icon"></span>
+            About Me</a>
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+        <a class="page-link" href=" / ">
+          <span data-icon="G" class="icon"></span>
+           中文 </a>
+      </div>
+    </nav>
+
+  </div>
+
+</header>
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Upgrade from Rails 4 to Rails 5</h1>
+    <p class="post-meta"><time datetime="2018-03-24T00:00:00+11:00" itemprop="datePublished">Mar 24, 2018</time>
+      
+        <span class="tag-item">rubyonrails</span>
+      
+    </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>Rails 5 has been released for a while, recently I was asked to upgrade from rails 4.2 to rails 5.1, it is quite straightforward, but there are some issues worth recording.</p>
+
+<h1 id="first-thing-try-first">First thing try first</h1>
+<p>After some googling, many people suggest remove all the version lock-in <code class="highlighter-rouge">Gemfile</code> and run <code class="highlighter-rouge">bundle update</code>, this might help for some projects, but in my case, I got into the issue below for 1 hours, cannot be resolved, but it’s still good to try first.</p>
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="no">Resolving</span> <span class="n">dependencies</span><span class="o">...........................................................................</span>
+<span class="o">................................................................................................</span><span class="p">.</span>
+<span class="nf">.</span><span class="o">................................................................................................</span>
+<span class="o">................................................................................................</span><span class="p">.</span>
+<span class="nf">.</span><span class="o">................................................................................................</span>
+<span class="o">................................................................................................</span><span class="p">.</span>
+<span class="nf">.</span><span class="o">................................................................................................</span>
+<span class="o">.................................................................................................</span>
+
+</code></pre></div></div>
+<h1 id="patch-update-rails-first">Patch update rails first</h1>
+<ul>
+  <li>Doing patch update first to the latest version of 4.2.x, vim Gemfile to <code class="highlighter-rouge">~&gt;</code>
+    <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>gem rails, '~&gt; 4.2.0'
+</code></pre></div>    </div>
+    <p>then run <code class="highlighter-rouge">bundle update</code></p>
+  </li>
+  <li>In my case, this will update my rails to rails 4.2.10, without any issue.
+    <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>bundle exec rails s(bundle exec thin start)
+</code></pre></div>    </div>
+    <p>I have seen a lot of deprecation warnings in the console, I fixed them one by one.</p>
+  </li>
+</ul>
+
+<h1 id="upgrade-to-rails-500">Upgrade to Rails 5.0.0</h1>
+<ul>
+  <li>Edit Gemfile then run <code class="highlighter-rouge">bundle update rails</code>
+    <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>gem 'rails', '5.0.0'
+</code></pre></div>    </div>
+  </li>
+  <li>If your project is anything like mine, you would have a lot of bundler’s cannot find compatible version errors for many gems. I have found most of them are just for <strong>development or test</strong>, my solution is:
+    <ol>
+      <li>checkout the github issues of the gem you are using for supporting rails 5;</li>
+      <li>comment that line out in the Gemfile for now if it’s must have for <strong>production</strong></li>
+    </ol>
+  </li>
+  <li>Luckily I commented out a few gems and run <code class="highlighter-rouge">bundle update rails</code>, toda installing all the dependencies.</li>
+  <li>After rails 5 is installed, I uncomment these gems and do <code class="highlighter-rouge">bundle install</code>, it auto fetches them again.</li>
+  <li>Now is actually the good time to upgrade all the Gems as many as possible, but be carefully some will having breaking changes, luckily I have Rspec tests as the baseline, you should have tests before upgrading rails.</li>
+</ul>
+
+<h1 id="post-install-rails-5">Post-install Rails 5</h1>
+<ul>
+  <li>It’s very likely your application will be borken at this point,
+    <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>bundle exec rake rails:update
+</code></pre></div>    </div>
+    <p>For Rails 5.1, the command is <code class="highlighter-rouge">bin/rake app:update</code>.
+Use <code class="highlighter-rouge">git diff</code> to carefully merge your old configurations with the new rails configurations.</p>
+  </li>
+  <li>Then run <code class="highlighter-rouge">bin/rake app:update:bin</code> to update the bin binary, which i think should be included in the git repo.</li>
+</ul>
+
+<h1 id="a-list-of-breaking-changes">A list of breaking changes:</h1>
+<ol>
+  <li>Gem <code class="highlighter-rouge">quiet_assets</code>, <code class="highlighter-rouge">test_after_commit</code> are included in Rails 5, should delete in Gemfile.</li>
+  <li>Gem <code class="highlighter-rouge">factory_girl_rails</code> is renamed to <code class="highlighter-rouge">factory_bot_rails</code>.</li>
+  <li>Enum type, <strong>where(field: string)</strong> no longer work, changed to <strong>where(field: fields[field]) or where(field: :symbol)</strong></li>
+  <li>Enum finally support <code class="highlighter-rouge">_prefix</code> and <code class="highlighter-rouge">_suffix</code></li>
+  <li><strong>render nothing: true, status: 401</strong> is deprecated, change to <strong>head :unauthorized</strong>.</li>
+  <li><code class="highlighter-rouge">belongs_to</code> default to <code class="highlighter-rouge">optional: false</code>, so association is required, it’s said you can configure the setting
+    <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Rails.application.config.active_record.belongs_to_required_by_default = false
+</code></pre></div>    </div>
+    <p>however, according to <a href="https://github.com/rails/activerecord-session_store/issues/116">the known issue</a>, it cannot be turned off when <strong>activerecord-session_store</strong> is used.</p>
+  </li>
+  <li><code class="highlighter-rouge">config.active_job.queue_adapter = :async</code> by default which uses concurrent-ruby. But this is not recommended for production environments.</li>
+  <li>Finally can use hash#dig, <code class="highlighter-rouge">{}.dig(:firstkey, :secondkey)</code></li>
+  <li><code class="highlighter-rouge">ActiveRelation#uniq</code> is removed in 5.1, will have to use <code class="highlighter-rouge">ActiveRelation#distinct</code></li>
+</ol>
+
+
+  </div>
+
+</article>
+
+<script>
+var idcomments_acct = 'a20779523aff068b009d4e96dc8479bb';
+var idcomments_post_id = "/develop/2018/03/24/Upgrade from rails 4 to rails 5";
+var idcomments_post_url = "https://cheeger.com/develop/2018/03/24/Upgrade-from-rails-4-to-rails-5.html";
+</script>
+<span id="IDCommentsPostTitle" style="display:none"></span>
+<script type='text/javascript' src='https://www.intensedebate.com/js/genericCommentWrapperV2.js'></script>
+
+
+      </div>
+    </div>
+
+    <footer class="site-footer">
+  <div class="wrapper">
+    <div>
+      <ul class="contact-list">
+        <li><a href="mailto:dqh725@gmail.com">
+          <span class="icon" data-icon="H"></span>
+          mail:dqh725@gmail.com</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <ul class="social-media-list">
+        
+        <li>
+          <a href="https://github.com/albahoo"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span><span class="username">albahoo</span></a>
+
+        </li>
+        
+
+        
+      </ul>
+    </div>
+
+    <div>
+      <p>LeBlanc’s law: Later equals never.</p>
+    </div>
+  </div>
+</footer>
+
+
+  </body>
+
+</html>

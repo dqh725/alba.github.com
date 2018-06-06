@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta content="/assets/images/favicon.png" itemprop="image">
+  <link rel="shortcut icon" type="image/png" href="/assets/images/favicon.png"/>
+  <title>S3 Log Analysis</title>
+  <meta name="description" content="S3 Log Analysis">
+
+  <link rel="stylesheet" href="/en/assets/css/main.css">
+  <link rel="canonical" href="https://cheeger.com/en/develop/2018/01/26/S3-Log-Analysis.html">
+  <link rel="alternate" type="application/rss+xml" title="" href="https://cheeger.com/en/feed.xml">
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-112429779-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-112429779-1');
+  </script>
+</head>
+
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+    <a class="site-title" href="/en/">
+      <span data-icon="N" class="icon"></span>
+      Alba's Blog
+    </a>
+    <nav class="site-nav">
+      <div class="trigger">
+        
+          
+          <a class="page-link" href="/en/about/">
+            <span data-icon="j" class="icon"></span>
+            About Me</a>
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+        <a class="page-link" href=" / ">
+          <span data-icon="G" class="icon"></span>
+           中文 </a>
+      </div>
+    </nav>
+
+  </div>
+
+</header>
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">S3 Log Analysis</h1>
+    <p class="post-meta"><time datetime="2018-01-26T00:00:00+11:00" itemprop="datePublished">Jan 26, 2018</time>
+      
+        <span class="tag-item">aws</span>
+      
+        <span class="tag-item">S3</span>
+      
+        <span class="tag-item">goaccess</span>
+      
+        <span class="tag-item">LogAnalysis</span>
+      
+    </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>Recently, I have been working on analysing AWS S3 Bucket usage, in order to produce a report of uploading and downloading of s3 objects. The process is quite tricky, here I will show you how to do it.</p>
+
+<h3 id="resource-and-tools-needed">Resource and tools needed:</h3>
+
+<ul>
+  <li>AWS S3 bucket</li>
+  <li>s3cmd: collect logs to local</li>
+  <li>goaccess: (<a href="https://github.com/allinurl/goaccess">Github Link</a>; <a href="https://goaccess.io">Home Page</a>) visualise tool</li>
+</ul>
+
+<h3 id="how-to-do-it">How to do it?</h3>
+<h4 id="1-enable-s3-bucket-server-logging">1. Enable S3 bucket server logging</h4>
+
+<p><a href="https://docs.aws.amazon.com/AmazonS3/latest/user-guide/server-access-logging.html">The official doc</a></p>
+
+<p>In short, AWS S3 doesn’t enable s3 logging by default, so first you will have to enable server logging first, go to the <code class="highlighter-rouge">bucket</code> -&gt; <code class="highlighter-rouge">Properties</code> -&gt; <code class="highlighter-rouge">Server access logging</code>, the log will be saved in an S3 bucket as well.</p>
+
+<p>Ideally, you should choose the destination bucket differently from the source bucket. However, save logs into the source bucket with a different <code class="highlighter-rouge">prefix</code> is allowed too. (Extra cost for saving log files)</p>
+
+<hr />
+<h4 id="2-collect-logs-via-s3cmd">2. Collect logs via s3cmd</h4>
+
+<p>One important thing that I have noticed is that the logs might be delayed in hours.</p>
+
+<p>First, I installed <strong>s3cmd</strong> command line tool</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>brew install s3cmd
+</code></pre></div></div>
+
+<p>Then, configure the s3cmd
+G
+    s3cmd –configure</p>
+
+<p><img src="/assets/images/posts/log_analyse/1.png" alt="Provide the default information in the prompt" />
+The most basic configuration is the <code class="highlighter-rouge">Access Key</code>, <code class="highlighter-rouge">Secret Key</code> and <code class="highlighter-rouge">Default Region</code>, you can leave all the others with s3cmd’s default setting.</p>
+
+<p>In order for s3cmd access the logs, you need to have an AWS IAM Roles pre-defined, which have read access to the destination bucket (can read the log file). From that IAM Roles, you can generate the credential for API access, which is the <code class="highlighter-rouge">access key</code> and <code class="highlighter-rouge">secret key</code>.</p>
+
+<p>In the configuration prompt, you will be able to test the connection with your setting before you save it, and finally, it will be saved in the <code class="highlighter-rouge">~/.s3cfg</code> by default.</p>
+
+<p>After the setting is done, now we are ready to collect the log files.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>s3cmd sync  s3://bucket_name/prefix/ /path/to/your/local/
+</code></pre></div></div>
+
+<p><code class="highlighter-rouge">/</code> in the end is required, and replace the <code class="highlighter-rouge">bucket_name</code> and <code class="highlighter-rouge">prefix</code> to log bucket and its <code class="highlighter-rouge">prefix</code>, and all the log file will be saved in your local folder</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cd /path/to/your/local
+</code></pre></div></div>
+
+<p>My log file name look like this <code class="highlighter-rouge">2018-01-22-04-17-29-D30883E096442F77</code>.</p>
+
+<hr />
+<h3 id="3-analyse-and-visualise-log-via-goaccess">3. Analyse and visualise log via goaccess</h3>
+<p>Firstly, install goaccess: (<a href="https://github.com/allinurl/goaccess">Gethub Link</a>; <a href="https://goaccess.io">Home Page</a>)</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>brew install goaccess
+</code></pre></div></div>
+
+<p>can also make from Github repo.</p>
+
+<p>Goaccess is quite easy to use, and it has s3 log format predefined, and it has the prompt to guide you when running, just do</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>goaccess * # select s3 log by typing space
+</code></pre></div></div>
+
+<p>or predefine configuration file</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>goaccess --dcf # this will print the path of the default configuration file
+
+vim /path/from/above
+</code></pre></div></div>
+
+<p>Three fields are required, <code class="highlighter-rouge">date-format</code>, <code class="highlighter-rouge">time-format</code>, <code class="highlighter-rouge">log-format</code>
+in my example:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>time-format %H:%M:%S
+date-format %d/%b/%Y
+log-format %^ %v [%d:%t %^] %h %^"%r" %s %^ %b %^ %L %^ "%R" "%u"
+</code></pre></div></div>
+
+<ul>
+  <li>GoAccess requires the following fields:</li>
+  <li>a valid IPv4/6 %h</li>
+  <li>a valid date %d</li>
+  <li>the request %r</li>
+</ul>
+
+<p>The log-format is defined in regex, see details in <a href="https://goaccess.io/man#custom-log">MAN PAGE</a>, or <code class="highlighter-rouge">man goaccess</code></p>
+
+<p>Finally you can produce the report,</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ag org s3_logs/ | less | goaccess $1
+</code></pre></div></div>
+
+<p>As in my case, I have to filter my logs and group all the logs by the query string <code class="highlighter-rouge">path?org=org_id</code> before apply goaccess.</p>
+
+<p>And to generate a html/csv report</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>goaccess * --no-csv-summary -o report.csv
+goaccess * -o report.html
+</code></pre></div></div>
+
+<p>My terninal view looks like this
+<img src="/assets/images/posts/log_analyse/2.png" alt="My Goaccess View" /></p>
+
+
+  </div>
+
+</article>
+
+<script>
+var idcomments_acct = 'a20779523aff068b009d4e96dc8479bb';
+var idcomments_post_id = "/develop/2018/01/26/S3 Log Analysis";
+var idcomments_post_url = "https://cheeger.com/develop/2018/01/26/S3-Log-Analysis.html";
+</script>
+<span id="IDCommentsPostTitle" style="display:none"></span>
+<script type='text/javascript' src='https://www.intensedebate.com/js/genericCommentWrapperV2.js'></script>
+
+
+      </div>
+    </div>
+
+    <footer class="site-footer">
+  <div class="wrapper">
+    <div>
+      <ul class="contact-list">
+        <li><a href="mailto:dqh725@gmail.com">
+          <span class="icon" data-icon="H"></span>
+          mail:dqh725@gmail.com</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <ul class="social-media-list">
+        
+        <li>
+          <a href="https://github.com/albahoo"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span><span class="username">albahoo</span></a>
+
+        </li>
+        
+
+        
+      </ul>
+    </div>
+
+    <div>
+      <p>LeBlanc’s law: Later equals never.</p>
+    </div>
+  </div>
+</footer>
+
+
+  </body>
+
+</html>

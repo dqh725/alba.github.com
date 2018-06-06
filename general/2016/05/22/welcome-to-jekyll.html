@@ -7,11 +7,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta content="/assets/images/favicon.png" itemprop="image">
   <link rel="shortcut icon" type="image/png" href="/assets/images/favicon.png"/>
-  <title>阿尔巴</title>
-  <meta name="description" content="">
+  <title>Markdown Syntax</title>
+  <meta name="description" content="Markdown Syntax">
 
   <link rel="stylesheet" href="/assets/css/main.css">
-  <link rel="canonical" href="https://cheeger.com/category/linux.html">
+  <link rel="canonical" href="https://cheeger.com/general/2016/05/22/welcome-to-jekyll.html">
   <link rel="alternate" type="application/rss+xml" title="" href="https://cheeger.com/feed.xml">
   <!-- Global site tag (gtag.js) - Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=UA-112429779-1"></script>
@@ -76,94 +76,85 @@
 
     <div class="page-content">
       <div class="wrapper">
-          <ul class="post-list">
-      <ul class="nav">
-    <li class="nav-item">
-      <span data-icon="1" class="icon"></span>
-      <a href="/index.html" class="btn btn-default">全部贴</a>
-    </li>
-    <li class="nav-item">
-      <span data-icon="1" class="icon"></span>
-      <a href="/category/develop.html" class="btn btn-default">技术贴</a>
-    </li>
-    <li class="nav-item">
-      <span data-icon="1" class="icon"></span>
-      <a href="/category/general.html" class="btn btn-default">其他贴</a>
-    </li>
-    <li class="nav-item">
-      <span data-icon="1" class="icon"></span>
-      <a href="/category/linux.html" class="btn btn-default">Linux命令</a>
-    </li>
-    <li class="nav-item">
-      <span data-icon="r" class="icon"></span>
-      <a href='/feed.xml'>订阅</a>
-    </li>
-  </ul>
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
 
-    
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Markdown Syntax</h1>
+    <p class="post-meta"><time datetime="2016-05-22T00:00:00+10:00" itemprop="datePublished">May 22, 2016</time>
       
-        
+        <span class="tag-item">syntax</span>
       
-        
-          <li>
-  <span class="post-meta">May 19, 2018</span>
+        <span class="tag-item">markdown</span>
+      
+    </p>
+  </header>
 
-  
-    <span class="tag-item">linux</span>
-  
+  <div class="post-content" itemprop="articleBody">
+    <p>Inline `code` has `back-ticks around` it.</p>
 
-  <h2>
-    <a class="post-link" href="/linux/2018/05/19/openssl.html">
-       <span class="icon" data-icon="B"></span> 
-      openssl
-    </a>
-  </h2>
-</li>
+<p>Inline <code class="highlighter-rouge">code</code> has <code class="highlighter-rouge">back-ticks around</code> it.</p>
 
-        
-      
-        
-      
-        
-      
-        
-      
-        
-          <li>
-  <span class="post-meta">Mar 4, 2018</span>
+<p>```javascript</p>
 
-  
-    <span class="tag-item">linux</span>
-  
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="s2">"JavaScript syntax highlighting"</span><span class="p">;</span>
+<span class="nx">alert</span><span class="p">(</span><span class="nx">s</span><span class="p">);</span>
+</code></pre></div></div>
+<p>```python</p>
 
-  <h2>
-    <a class="post-link" href="/linux/2018/03/04/common-linux-commands.html">
-       <span class="icon" data-icon="B"></span> 
-      find/sed
-    </a>
-  </h2>
-</li>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">s</span> <span class="o">=</span> <span class="s">"Python syntax highlighting"</span>
+<span class="k">print</span> <span class="n">s</span>
+</code></pre></div></div>
 
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-    
-  </ul>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>No language indicated, so no syntax highlighting.
+But let's throw in a &lt;b&gt;tag&lt;/b&gt;.
+</code></pre></div></div>
+
+<p>&gt; you can *put* **Markdown** into a blockquote.</p>
+
+<blockquote>
+  <p>you can <em>put</em> <strong>Markdown</strong> into a blockquote.</p>
+</blockquote>
+
+<p>Three or more…</p>
+
+<p>---</p>
+
+<hr />
+
+<p>Hyphens</p>
+
+<p>***</p>
+
+<hr />
+
+<p>Asterisks</p>
+
+<p>___</p>
+
+<hr />
+
+<p>Underscores</p>
+
+<p>{ % hightlight ruby %}</p>
+
+<p>{ % endhightlight %}</p>
+
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">def</span> <span class="nf">print_hi</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
+  <span class="nb">puts</span> <span class="s2">"Hi, </span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">"</span>
+<span class="k">end</span>
+<span class="n">print_hi</span><span class="p">(</span><span class="s1">'Tom'</span><span class="p">)</span>
+<span class="c1">#=&gt; prints 'Hi, Tom' to STDOUT.</span></code></pre></figure>
+
+<p>[blog.cheeger.com][url]</p>
+
+<p><a href="http://blog.cheeger.com/">blog.cheeger.com</a></p>
+
+<p>Check out the <a href="http://jekyllrb.com/docs/home">Jekyll docs</a> for more info on how to get the most out of Jekyll. File all bugs/feature requests at <a href="https://github.com/jekyll/jekyll">Jekyll’s GitHub repo</a>. If you have questions, you can ask them on <a href="https://talk.jekyllrb.com/">Jekyll Talk</a>.</p>
+
+
+  </div>
+
+</article>
 
 
       </div>

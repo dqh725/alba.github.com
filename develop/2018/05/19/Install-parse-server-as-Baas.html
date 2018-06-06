@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta content="/assets/images/favicon.png" itemprop="image">
+  <link rel="shortcut icon" type="image/png" href="/assets/images/favicon.png"/>
+  <title>Implementat your own Backend-as-a-service via parse-server</title>
+  <meta name="description" content="Implementat your own Backend-as-a-service via parse-server">
+
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <link rel="canonical" href="https://cheeger.com/develop/2018/05/19/Install-parse-server-as-Baas.html">
+  <link rel="alternate" type="application/rss+xml" title="" href="https://cheeger.com/feed.xml">
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-112429779-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-112429779-1');
+  </script>
+</head>
+
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+    <a class="site-title" href="/">
+      <span data-icon="N" class="icon"></span>
+      阿尔巴
+    </a>
+    <nav class="site-nav">
+      <div class="trigger">
+        
+          
+          <a class="page-link" href="/about/">
+            <span data-icon="j" class="icon"></span>
+            履历</a>
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+        <a class="page-link" href=" /en ">
+          <span data-icon="G" class="icon"></span>
+           English </a>
+      </div>
+    </nav>
+
+  </div>
+
+</header>
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Implementat your own Backend-as-a-service via parse-server</h1>
+    <p class="post-meta"><time datetime="2018-05-19T00:00:00+10:00" itemprop="datePublished">May 19, 2018</time>
+      
+        <span class="tag-item">parse-server</span>
+      
+        <span class="tag-item">parse-dashboard</span>
+      
+        <span class="tag-item">pm2</span>
+      
+        <span class="tag-item">noSQL</span>
+      
+    </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <h1 id="background">Background</h1>
+<p>When building mobile app, andriod or IOS, where to save the data is frustrated, building the whole API backend sometime seems overkill for a small application. Parse used to be one of the best Baas, but facebook has brought it and shut it down, shame!</p>
+
+<p>Now since the parse-server has become open source for a while, so in this article, I will discuss how to install parse-server in your own server.</p>
+
+<h1 id="install">Install</h1>
+<p>Install node/npm, in my case, I used node8 in this example.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npm install -g parse-server mongodb-runner pm2
+mongodb-runner start
+</code></pre></div></div>
+
+<p>This will download the mongodb and start it automatically.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/parse-community/parse-server-example.git
+cd parse-server-example
+</code></pre></div></div>
+
+<p>Use the example code to setup parse-server with express, it’s simple to use <code class="highlighter-rouge">pm2</code> to manage all npm processes.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pm2 start index.js
+</code></pre></div></div>
+
+<p>Now we will have a parse-server running on our server, good enough to use as backend service.
+We can test by <code class="highlighter-rouge">curl</code> post and get.</p>
+
+<h1 id="install-parse-dashboard">Install Parse Dashboard</h1>
+<p>Sometimes it will need a dashbaord to view/edit data in a console, <code class="highlighter-rouge">parse-dashboard</code> is good for that purpose.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npm install parse-dashboard dotenv -save
+</code></pre></div></div>
+
+<p>My final package.json is like this:</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"parse-server-example"</span><span class="p">,</span>
+  <span class="s2">"version"</span><span class="p">:</span> <span class="s2">"1.4.0"</span><span class="p">,</span>
+  <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"An example Parse API server using the parse-server module"</span><span class="p">,</span>
+  <span class="s2">"main"</span><span class="p">:</span> <span class="s2">"index.js"</span><span class="p">,</span>
+  <span class="s2">"repository"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"git"</span><span class="p">,</span>
+    <span class="s2">"url"</span><span class="p">:</span> <span class="s2">"https://github.com/ParsePlatform/parse-server-example"</span>
+  <span class="p">},</span>
+  <span class="s2">"license"</span><span class="p">:</span> <span class="s2">"MIT"</span><span class="p">,</span>
+  <span class="s2">"dependencies"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">"dotenv"</span><span class="p">:</span> <span class="s2">"^5.0.1"</span><span class="p">,</span>
+    <span class="s2">"express"</span><span class="p">:</span> <span class="s2">"~4.11.x"</span><span class="p">,</span>
+    <span class="s2">"kerberos"</span><span class="p">:</span> <span class="s2">"~0.0.x"</span><span class="p">,</span>
+    <span class="s2">"parse"</span><span class="p">:</span> <span class="s2">"~1.8.0"</span><span class="p">,</span>
+    <span class="s2">"parse-dashboard"</span><span class="p">:</span> <span class="s2">"^1.2.0"</span><span class="p">,</span>
+    <span class="s2">"parse-server"</span><span class="p">:</span> <span class="s2">"*"</span>
+  <span class="p">},</span>
+  <span class="s2">"scripts"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">"start"</span><span class="p">:</span> <span class="s2">"node index.js"</span>
+  <span class="p">},</span>
+  <span class="s2">"engines"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">"node"</span><span class="p">:</span> <span class="s2">"&gt;=4.3"</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+<p>my <code class="highlighter-rouge">.env</code> :</p>
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">DATABASE_URI</span><span class="o">=</span>mongodb://localhost:27017/parse
+<span class="nv">APP_ID</span><span class="o">=</span>my_app_id
+<span class="nv">MASTER_KEY</span><span class="o">=</span>masterkey
+<span class="nv">PORT</span><span class="o">=</span>1337
+<span class="nv">serverURL</span><span class="o">=</span>https://localhost:1337/parse
+</code></pre></div></div>
+<p>default port for parse is 1337, you can change to others if you want;</p>
+
+<p>Open the firewall rule for port 1337</p>
+
+<h1 id="the-last-step">The last step:</h1>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>vim index.js
+</code></pre></div></div>
+
+<p>on the top of the file, add:</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">require</span><span class="p">(</span><span class="s1">'dotenv'</span><span class="p">).</span><span class="nx">config</span><span class="p">();</span>
+<span class="kd">var</span> <span class="nx">ParseDashboard</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'parse-dashboard'</span><span class="p">);</span>
+</code></pre></div></div>
+<p>on the bottom of the file, add:</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">var</span> <span class="nx">dashboard</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ParseDashboard</span><span class="p">({</span>
+  <span class="s2">"apps"</span><span class="p">:</span> <span class="p">[{</span>
+    <span class="s2">"serverURL"</span><span class="p">:</span> <span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">SERVER_URL</span><span class="p">,</span>
+    <span class="s2">"appId"</span><span class="p">:</span> <span class="s2">"alba"</span><span class="p">,</span>
+    <span class="s2">"masterKey"</span><span class="p">:</span> <span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">MASTER_KEY</span> <span class="o">||</span> <span class="s1">'masterkey'</span><span class="p">,</span>
+    <span class="s2">"appName"</span><span class="p">:</span> <span class="s2">"My Cool App"</span><span class="p">,</span>
+    <span class="s2">"supportedPushLocales"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"en"</span><span class="p">]</span>
+  <span class="p">}],</span>
+  <span class="s2">"users"</span><span class="p">:</span> <span class="p">[{</span>
+    <span class="s2">"user"</span><span class="p">:</span> <span class="s2">"admin"</span><span class="p">,</span>
+    <span class="s2">"pass"</span><span class="p">:</span> <span class="s2">"$2a$10$6A4FbxSfHh2WonKClgBceeDRLcyqfsnegj0HuXG.9M7Qk4izAonG2"</span><span class="p">,</span> <span class="c1">// the encripted hash for 'admin'</span>
+    <span class="s2">"apps"</span><span class="p">:</span> <span class="p">[{</span><span class="s2">"appId"</span><span class="p">:</span> <span class="s2">"alba"</span><span class="p">}]</span>
+  <span class="p">}],</span>
+  <span class="s2">"useEncryptedPasswords"</span><span class="p">:</span> <span class="kc">true</span> <span class="c1">// or set to false, use plain password</span>
+<span class="p">});</span>
+
+<span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="s1">'/dashboard'</span><span class="p">,</span> <span class="nx">dashboard</span><span class="p">);</span>
+</code></pre></div></div>
+
+<h1 id="lets-encript-the-domin">Lets Encript the domin</h1>
+
+<p>Now when open SERVER_URL/dashbaord, it will open the dashboard, but you will see a big warning message, you need https to enable the full features. <a href="https://certbot.eff.org/">How to set up lets encript for you domain</a></p>
+
+<p>Enjoy you parse-server and parse-dashboard.</p>
+
+  </div>
+
+</article>
+
+
+      </div>
+    </div>
+
+    <footer class="site-footer">
+  <div class="wrapper">
+    <div>
+      <ul class="contact-list">
+        <li><a href="mailto:dqh725@gmail.com">
+          <span class="icon" data-icon="H"></span>
+          电邮:dqh725@gmail.com</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <ul class="social-media-list">
+        
+        <li>
+          <a href="https://github.com/albahoo"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span><span class="username">albahoo</span></a>
+
+        </li>
+        
+
+        
+      </ul>
+    </div>
+
+    <div>
+      <p>勒布朗法则：推延等于不做</p>
+    </div>
+  </div>
+</footer>
+
+
+  </body>
+
+</html>

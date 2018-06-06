@@ -7,12 +7,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta content="/assets/images/favicon.png" itemprop="image">
   <link rel="shortcut icon" type="image/png" href="/assets/images/favicon.png"/>
-  <title>阿尔巴</title>
-  <meta name="description" content="">
+  <title>find/sed</title>
+  <meta name="description" content="find/sed">
 
-  <link rel="stylesheet" href="/assets/css/main.css">
-  <link rel="canonical" href="https://cheeger.com/category/linux.html">
-  <link rel="alternate" type="application/rss+xml" title="" href="https://cheeger.com/feed.xml">
+  <link rel="stylesheet" href="/en/assets/css/main.css">
+  <link rel="canonical" href="https://cheeger.com/en/linux/2018/03/04/common-linux-commands.html">
+  <link rel="alternate" type="application/rss+xml" title="" href="https://cheeger.com/en/feed.xml">
   <!-- Global site tag (gtag.js) - Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=UA-112429779-1"></script>
   <script>
@@ -30,17 +30,17 @@
     <header class="site-header">
 
   <div class="wrapper">
-    <a class="site-title" href="/">
+    <a class="site-title" href="/en/">
       <span data-icon="N" class="icon"></span>
-      阿尔巴
+      Alba's Blog
     </a>
     <nav class="site-nav">
       <div class="trigger">
         
           
-          <a class="page-link" href="/about/">
+          <a class="page-link" href="/en/about/">
             <span data-icon="j" class="icon"></span>
-            履历</a>
+            About Me</a>
           
         
           
@@ -63,9 +63,9 @@
         
           
         
-        <a class="page-link" href=" /en ">
+        <a class="page-link" href=" / ">
           <span data-icon="G" class="icon"></span>
-           English </a>
+           中文 </a>
       </div>
     </nav>
 
@@ -76,94 +76,42 @@
 
     <div class="page-content">
       <div class="wrapper">
-          <ul class="post-list">
-      <ul class="nav">
-    <li class="nav-item">
-      <span data-icon="1" class="icon"></span>
-      <a href="/index.html" class="btn btn-default">全部贴</a>
-    </li>
-    <li class="nav-item">
-      <span data-icon="1" class="icon"></span>
-      <a href="/category/develop.html" class="btn btn-default">技术贴</a>
-    </li>
-    <li class="nav-item">
-      <span data-icon="1" class="icon"></span>
-      <a href="/category/general.html" class="btn btn-default">其他贴</a>
-    </li>
-    <li class="nav-item">
-      <span data-icon="1" class="icon"></span>
-      <a href="/category/linux.html" class="btn btn-default">Linux命令</a>
-    </li>
-    <li class="nav-item">
-      <span data-icon="r" class="icon"></span>
-      <a href='/feed.xml'>订阅</a>
-    </li>
-  </ul>
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
 
-    
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">find/sed</h1>
+    <p class="post-meta"><time datetime="2018-03-04T00:00:00+11:00" itemprop="datePublished">Mar 4, 2018</time>
       
-        
+        <span class="tag-item">linux</span>
       
-        
-          <li>
-  <span class="post-meta">May 19, 2018</span>
+    </p>
+  </header>
 
-  
-    <span class="tag-item">linux</span>
-  
+  <div class="post-content" itemprop="articleBody">
+    <h1 id="find-out-linux-kernal-version">Find out linux kernal version</h1>
+<p>To find out what version of Linux (distro) you are running, try these 3 commands:</p>
 
-  <h2>
-    <a class="post-link" href="/linux/2018/05/19/openssl.html">
-       <span class="icon" data-icon="B"></span> 
-      openssl
-    </a>
-  </h2>
-</li>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ cat /etc/*-release
+$ uname -a
+$ cat /proc/version
+</code></pre></div></div>
 
-        
-      
-        
-      
-        
-      
-        
-      
-        
-          <li>
-  <span class="post-meta">Mar 4, 2018</span>
+<h1 id="find-filedirectory">Find file/directory</h1>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>find [directory] -type [f/d] -name [file pattern] // e.g. *.rb; prefix*suffix
+</code></pre></div></div>
 
-  
-    <span class="tag-item">linux</span>
-  
+<h1 id="global-replace-string">Global replace string</h1>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sed -i '' 's/\(regex\)/\1, extra string/g' app/models/*.rb
+</code></pre></div></div>
+<p>node: <code class="highlighter-rouge">''</code> is needed for mac</p>
 
-  <h2>
-    <a class="post-link" href="/linux/2018/03/04/common-linux-commands.html">
-       <span class="icon" data-icon="B"></span> 
-      find/sed
-    </a>
-  </h2>
-</li>
+<p>Find all rb files and replace all <code class="highlighter-rouge">FactoryGirl</code> to <code class="highlighter-rouge">FactoryBot</code></p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ find ./ -type f -name *.rb -exec sed -i '' 's/FactoryGirl/FactoryBot/g'
+</code></pre></div></div>
 
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-    
-  </ul>
+  </div>
+
+</article>
 
 
       </div>
@@ -175,7 +123,7 @@
       <ul class="contact-list">
         <li><a href="mailto:dqh725@gmail.com">
           <span class="icon" data-icon="H"></span>
-          电邮:dqh725@gmail.com</a></li>
+          mail:dqh725@gmail.com</a></li>
       </ul>
     </div>
 
@@ -194,7 +142,7 @@
     </div>
 
     <div>
-      <p>勒布朗法则：推延等于不做</p>
+      <p>LeBlanc’s law: Later equals never.</p>
     </div>
   </div>
 </footer>

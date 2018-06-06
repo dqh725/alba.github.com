@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta content="/assets/images/favicon.png" itemprop="image">
+  <link rel="shortcut icon" type="image/png" href="/assets/images/favicon.png"/>
+  <title>Image processing with AWS lambda &amp; S3 buckets</title>
+  <meta name="description" content="Image processing with AWS lambda & S3 buckets">
+
+  <link rel="stylesheet" href="/en/assets/css/main.css">
+  <link rel="canonical" href="https://cheeger.com/en/develop/2018/03/17/Image-processing-with-AWS-lambda-+-S3-buckets.html">
+  <link rel="alternate" type="application/rss+xml" title="" href="https://cheeger.com/en/feed.xml">
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-112429779-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-112429779-1');
+  </script>
+</head>
+
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+    <a class="site-title" href="/en/">
+      <span data-icon="N" class="icon"></span>
+      Alba's Blog
+    </a>
+    <nav class="site-nav">
+      <div class="trigger">
+        
+          
+          <a class="page-link" href="/en/about/">
+            <span data-icon="j" class="icon"></span>
+            About Me</a>
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+        <a class="page-link" href=" / ">
+          <span data-icon="G" class="icon"></span>
+           中文 </a>
+      </div>
+    </nav>
+
+  </div>
+
+</header>
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Image processing with AWS lambda & S3 buckets</h1>
+    <p class="post-meta"><time datetime="2018-03-17T00:00:00+11:00" itemprop="datePublished">Mar 17, 2018</time>
+      
+        <span class="tag-item">AWS</span>
+      
+        <span class="tag-item">lambda</span>
+      
+        <span class="tag-item">S3</span>
+      
+    </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <h1 id="use-aws-lambda-for-image-processing">Use AWS lambda for image processing</h1>
+<p>This is the toturial of how to do media file processing after uploaded to s3 by AWS lambda with node.</p>
+
+<h1 id="how-it-works">How it works</h1>
+<ol>
+  <li>Create an AWS Lambda,
+<img src="/assets/images/posts/lambda/new_lambda.png" alt="create a new lambda" /></li>
+  <li>Create an IAM role with the buildin AWS policy, in my case, I named the role <code class="highlighter-rouge">lambda_s3_writer</code>
+<img src="/assets/images/posts/lambda/aws_policy.png" alt="with the default policy" />
+in the above image, the aws managed policy include <code class="highlighter-rouge">read/write</code> access to all S3 buckets and the permissions to write logs to cloudwatch.</li>
+  <li>Add a lambda trigger, mine is just set when an object is uploaded into s3 bucket.
+<img src="/assets/images/posts/lambda/trigger.png" alt="lambda trigger" /></li>
+  <li>There are 3 ways upload function code, uploading the whole code package into a zip file, and upload to one S4 bucket, then copy the S3 object link into the lambda configuration.</li>
+  <li>You can also set <code class="highlighter-rouge">Environment variables</code> in lambda as well.</li>
+</ol>
+
+<h1 id="functional-code">Functional Code</h1>
+
+<p>AWS lambda have imagemagick installed by default, so I can just use <a href="https://github.com/aheckmann/gm">gm</a> for image processing.</p>
+
+<p>For extract file metadata, I recommend to use ffprobe, which can deal with <code class="highlighter-rouge">image/video/audio</code> files. However, in order to user <code class="highlighter-rouge">ffprobe</code> command in lambda, we will need to include this binary file in the package zip too. Luckily, we can use <a href="https://github.com/joshwnj/ffprobe-static">node module of ffprobe binary</a> together with <a href="https://github.com/ListenerApproved/node-ffprobe">node module of ffprobe wrapper</a></p>
+
+<p><code class="highlighter-rouge">npm install node-ffprobe --save</code></p>
+
+<p><code class="highlighter-rouge">npm install ffprobe-static --save</code></p>
+
+<p><strong>index.js</strong></p>
+
+<figure class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="s1">'use strict'</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">WIDTH</span> <span class="o">=</span> <span class="mi">1920</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">HEIGHT</span> <span class="o">=</span> <span class="mi">1080</span><span class="p">;</span>
+<span class="c1">// get media file metadata</span>
+<span class="kd">var</span> <span class="nx">probe</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'node-ffprobe'</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">ffprobe</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'ffprobe-static'</span><span class="p">);</span>
+<span class="nx">probe</span><span class="p">.</span><span class="nx">FFPROBE_PATH</span> <span class="o">=</span> <span class="nx">ffprobe</span><span class="p">.</span><span class="nx">path</span><span class="p">;</span> <span class="c1">// use the ffprobe-static's binary path</span>
+<span class="c1">// resize image; fitScreen/bordering</span>
+<span class="kd">var</span> <span class="nx">tools</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'./tools.js'</span><span class="p">);</span>
+<span class="c1">// POST to backend</span>
+<span class="kd">var</span> <span class="nx">request</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'request'</span><span class="p">);</span>
+
+<span class="kd">var</span> <span class="nx">AWS</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'aws-sdk'</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">s3</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">AWS</span><span class="p">.</span><span class="nx">S3</span><span class="p">();</span>
+
+<span class="kd">function</span> <span class="nx">waterfall</span><span class="p">(</span><span class="nx">obj_params</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">ffprobe_meta</span><span class="p">(</span><span class="nx">obj_params</span><span class="p">.</span><span class="nx">Key</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">meta</span> <span class="o">=&gt;</span> <span class="p">{</span>
+      <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">`[need resize] </span><span class="p">${</span><span class="nx">need_resize</span><span class="p">(</span><span class="nx">meta</span><span class="p">)}</span><span class="s2">`</span><span class="p">);</span>
+      <span class="k">if</span><span class="p">(</span><span class="nx">need_resize</span><span class="p">(</span><span class="nx">meta</span><span class="p">))</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">info</span> <span class="o">=</span> <span class="p">{</span>
+          <span class="na">height</span><span class="p">:</span> <span class="nx">meta</span><span class="p">.</span><span class="nx">streams</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">height</span><span class="p">,</span>
+          <span class="na">width</span><span class="p">:</span> <span class="nx">meta</span><span class="p">.</span><span class="nx">streams</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">width</span><span class="p">,</span>
+          <span class="na">format</span><span class="p">:</span> <span class="nx">meta</span><span class="p">.</span><span class="nx">streams</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">codec_name</span>
+        <span class="p">};</span>
+        <span class="k">return</span> <span class="nx">download</span><span class="p">(</span><span class="nx">obj_params</span><span class="p">)</span>
+                 <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">s3object</span> <span class="o">=&gt;</span> <span class="nx">resize</span><span class="p">(</span><span class="nx">s3object</span><span class="p">,</span> <span class="nx">info</span><span class="p">))</span>
+                 <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">newObject</span> <span class="o">=&gt;</span> <span class="nx">save</span><span class="p">(</span><span class="nx">newObject</span><span class="p">,</span> <span class="nx">obj_params</span><span class="p">))</span>
+                 <span class="p">.</span><span class="nx">then</span><span class="p">(()</span> <span class="o">=&gt;</span> <span class="nx">ffprobe_meta</span><span class="p">(</span><span class="nx">obj_params</span><span class="p">.</span><span class="nx">Key</span><span class="p">))</span>
+      <span class="p">}</span>
+      <span class="k">else</span>
+        <span class="k">return</span> <span class="nb">Promise</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="nx">meta</span><span class="p">);</span>
+    <span class="p">})</span>
+    <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">meta</span> <span class="o">=&gt;</span> <span class="p">{</span>
+      <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'start posting...'</span><span class="p">);</span>
+      <span class="nx">request</span><span class="p">({</span>
+        <span class="na">url</span><span class="p">:</span> <span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">SERVER_ORIGIN</span> <span class="o">+</span> <span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">END_POINT</span>
+        <span class="na">method</span><span class="p">:</span> <span class="s1">'PATCH'</span><span class="p">,</span>
+        <span class="na">json</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>   <span class="c1">// required</span>
+        <span class="na">body</span><span class="p">:</span> <span class="nx">paramlise</span><span class="p">(</span><span class="nx">meta</span><span class="p">,</span> <span class="nx">obj_params</span><span class="p">.</span><span class="nx">Key</span><span class="p">)</span>
+      <span class="p">},</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">error</span><span class="p">,</span> <span class="nx">response</span><span class="p">){</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">response</span><span class="p">.</span><span class="nx">statusCode</span> <span class="o">&lt;</span> <span class="mi">400</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">console</span><span class="p">.</span><span class="nx">info</span><span class="p">(</span><span class="s1">'Message posted successfully'</span><span class="p">);</span>
+          <span class="nx">callback</span><span class="p">(</span><span class="kc">null</span><span class="p">);</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">response</span><span class="p">.</span><span class="nx">statusCode</span> <span class="o">&lt;</span> <span class="mi">500</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s2">`Error posting message to Slack API: </span><span class="p">${</span><span class="nx">response</span><span class="p">.</span><span class="nx">statusCode</span><span class="p">}</span><span class="s2"> - </span><span class="p">${</span><span class="nx">response</span><span class="p">.</span><span class="nx">statusMessage</span><span class="p">}</span><span class="s2">`</span><span class="p">);</span>
+          <span class="nx">callback</span><span class="p">(</span><span class="kc">null</span><span class="p">);</span>  <span class="c1">// Don"t retry because the error is due to a problem with the request</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+          <span class="c1">// TODO: Let Lambda retry</span>
+          <span class="nx">callback</span><span class="p">(</span><span class="s2">`Server error when processing message: </span><span class="p">${</span><span class="nx">response</span><span class="p">.</span><span class="nx">statusCode</span><span class="p">}</span><span class="s2"> - </span><span class="p">${</span><span class="nx">response</span><span class="p">.</span><span class="nx">statusMessage</span><span class="p">}</span><span class="s2">`</span><span class="p">);</span>
+        <span class="p">}</span>
+      <span class="p">});</span>
+    <span class="p">})</span>
+    <span class="p">.</span><span class="k">catch</span><span class="p">(</span><span class="nx">err</span> <span class="o">=&gt;</span> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">err</span><span class="p">));</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">ffprobe_meta</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'[ffprobe_meta] trying to ffprobe...'</span><span class="p">);</span>
+  <span class="k">return</span> <span class="k">new</span> <span class="nb">Promise</span><span class="p">((</span><span class="nx">resolve</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+    <span class="nx">probe</span><span class="p">(</span><span class="nx">getpath</span><span class="p">(</span><span class="nx">key</span><span class="p">),</span> <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">file_meta</span><span class="p">){</span>
+      <span class="k">if</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'[ffprobe_meta] ffprobe err:'</span><span class="p">,</span> <span class="nx">err</span><span class="p">);</span>
+      <span class="k">else</span>
+        <span class="nx">resolve</span><span class="p">(</span><span class="nx">file_meta</span><span class="p">);</span>
+    <span class="p">});</span>
+  <span class="p">});</span>
+<span class="p">}</span>
+<span class="kd">function</span> <span class="nx">download</span><span class="p">(</span><span class="nx">obj_params</span><span class="p">){</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">`[download] start downloading s3 object: </span><span class="p">${</span><span class="nx">obj_params</span><span class="p">.</span><span class="nx">Key</span><span class="p">}</span><span class="s2">`</span><span class="p">);</span>
+  <span class="k">return</span> <span class="k">new</span> <span class="nb">Promise</span><span class="p">((</span><span class="nx">resolve</span><span class="p">,</span> <span class="nx">reject</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+    <span class="nx">s3</span><span class="p">.</span><span class="nx">getObject</span><span class="p">(</span><span class="nx">obj_params</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">data</span><span class="p">){</span>
+      <span class="k">if</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'[download] err:'</span><span class="p">,</span> <span class="nx">err</span><span class="p">);</span>
+        <span class="nx">reject</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+      <span class="p">}</span>
+      <span class="k">else</span>
+        <span class="nx">resolve</span><span class="p">(</span><span class="nx">data</span><span class="p">);</span>
+    <span class="p">});</span>
+  <span class="p">});</span>
+<span class="p">}</span>
+
+<span class="c1">// option = "bordering | stretch"</span>
+<span class="kd">function</span> <span class="nx">resize</span><span class="p">(</span><span class="nx">s3object</span><span class="p">,</span> <span class="nx">info</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'[resize] trying to resize...'</span><span class="p">);</span>
+  <span class="kd">var</span> <span class="nx">option</span> <span class="o">=</span> <span class="nx">s3object</span><span class="p">.</span><span class="nx">Metadata</span><span class="p">[</span><span class="s1">'resize'</span><span class="p">];</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">`[resize] option: </span><span class="p">${</span><span class="nx">option</span><span class="p">}</span><span class="s2">`</span><span class="p">);</span>
+  <span class="k">if</span><span class="p">(</span><span class="nx">option</span> <span class="o">===</span> <span class="s1">'stretch'</span><span class="p">){</span>
+    <span class="k">return</span> <span class="nx">tools</span><span class="p">.</span><span class="nx">fitScreen</span><span class="p">(</span><span class="nx">s3object</span><span class="p">.</span><span class="nx">Body</span><span class="p">)</span>
+             <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">newBuffer</span> <span class="o">=&gt;</span> <span class="p">{</span>
+               <span class="k">return</span> <span class="p">{</span>
+                 <span class="na">Body</span><span class="p">:</span> <span class="nx">newBuffer</span><span class="p">,</span>
+                 <span class="na">ContentDisposition</span><span class="p">:</span> <span class="nx">s3object</span><span class="p">.</span><span class="nx">ContentDisposition</span><span class="p">,</span>
+                 <span class="na">Metadata</span><span class="p">:</span> <span class="p">{</span> <span class="s1">'resized'</span><span class="p">:</span> <span class="s1">'stretch'</span> <span class="p">}</span>
+               <span class="p">}</span>
+             <span class="p">});</span>
+  <span class="p">}</span>
+  <span class="k">else</span> <span class="k">if</span><span class="p">(</span><span class="nx">option</span> <span class="o">===</span> <span class="s1">'bordering'</span><span class="p">){</span>
+    <span class="k">return</span> <span class="nx">tools</span><span class="p">.</span><span class="nx">bordering</span><span class="p">(</span><span class="nx">s3object</span><span class="p">.</span><span class="nx">Body</span><span class="p">,</span> <span class="nx">info</span><span class="p">)</span>
+             <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">newBuffer</span> <span class="o">=&gt;</span> <span class="p">{</span>
+               <span class="k">return</span> <span class="p">{</span>
+                 <span class="na">Body</span><span class="p">:</span> <span class="nx">newBuffer</span><span class="p">,</span>
+                 <span class="na">ContentDisposition</span><span class="p">:</span> <span class="nx">s3object</span><span class="p">.</span><span class="nx">ContentDisposition</span><span class="p">,</span>
+                 <span class="na">Metadata</span><span class="p">:</span> <span class="p">{</span> <span class="s1">'resized'</span><span class="p">:</span> <span class="s1">'bordering'</span> <span class="p">}</span>
+               <span class="p">}</span>
+             <span class="p">});</span>
+  <span class="p">}</span>
+  <span class="k">else</span> <span class="p">{</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'invalid option'</span><span class="p">);</span>
+    <span class="k">return</span> <span class="nb">Promise</span><span class="p">.</span><span class="nx">reject</span><span class="p">(</span><span class="s1">'invalid option'</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// replace the original s3 object with the resized image buffer and return the metadata of the new file</span>
+<span class="kd">function</span> <span class="nx">save</span><span class="p">(</span><span class="nx">newObject</span><span class="p">,</span> <span class="nx">obj_params</span><span class="p">){</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'[save] replace the s3 object with resized one'</span><span class="p">);</span>
+  <span class="nx">newObject</span><span class="p">.</span><span class="nx">Bucket</span> <span class="o">=</span> <span class="nx">obj_params</span><span class="p">[</span><span class="s1">'Bucket'</span><span class="p">];</span>
+  <span class="nx">newObject</span><span class="p">.</span><span class="nx">Key</span> <span class="o">=</span> <span class="nx">obj_params</span><span class="p">[</span><span class="s1">'Key'</span><span class="p">];</span>
+  <span class="k">return</span> <span class="k">new</span> <span class="nb">Promise</span><span class="p">((</span><span class="nx">resolve</span><span class="p">,</span> <span class="nx">reject</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+    <span class="nx">s3</span><span class="p">.</span><span class="nx">putObject</span><span class="p">(</span><span class="nx">newObject</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">data</span><span class="p">){</span>
+      <span class="k">if</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+        <span class="nx">reject</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+      <span class="p">}</span>
+      <span class="k">else</span> <span class="p">{</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'[save] image is successfully saved.'</span><span class="p">);</span>
+        <span class="nx">resolve</span><span class="p">(</span><span class="nx">data</span><span class="p">);</span>
+      <span class="p">}</span>
+    <span class="p">});</span>
+  <span class="p">});</span>
+<span class="p">}</span>
+
+<span class="c1">// ffprobe only work with path/url, cannot work with buffer</span>
+<span class="kd">function</span> <span class="nx">getpath</span><span class="p">(</span><span class="nx">key</span><span class="p">){</span>
+  <span class="k">return</span> <span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">BUCKET_ORIGIN</span> <span class="o">+</span> <span class="s1">'/'</span> <span class="o">+</span> <span class="nx">key</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">paramlise</span><span class="p">(</span><span class="nx">data</span><span class="p">,</span> <span class="nx">key</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">params</span> <span class="o">=</span> <span class="p">{};</span>
+  <span class="nx">params</span><span class="p">.</span><span class="nx">file_size</span> <span class="o">=</span> <span class="nx">data</span><span class="p">.</span><span class="nx">format</span><span class="p">.</span><span class="nx">size</span><span class="p">;</span>
+  <span class="nx">params</span><span class="p">.</span><span class="nx">duration</span> <span class="o">=</span> <span class="nx">data</span><span class="p">.</span><span class="nx">format</span><span class="p">.</span><span class="nx">duration</span><span class="p">;</span>
+  <span class="nx">params</span><span class="p">.</span><span class="nx">width</span> <span class="o">=</span> <span class="nx">data</span><span class="p">.</span><span class="nx">streams</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">width</span><span class="p">;</span>
+  <span class="nx">params</span><span class="p">.</span><span class="nx">height</span> <span class="o">=</span> <span class="nx">data</span><span class="p">.</span><span class="nx">streams</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">height</span><span class="p">;</span>
+  <span class="nx">params</span><span class="p">.</span><span class="nx">lambda_token</span> <span class="o">=</span> <span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">LAMBDA_TOKEN</span><span class="p">;</span>
+  <span class="nx">params</span><span class="p">.</span><span class="nx">location</span> <span class="o">=</span> <span class="nx">key</span><span class="p">;</span>
+  <span class="k">return</span> <span class="nx">params</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// image with incorrect dimension will need resize</span>
+<span class="kd">function</span> <span class="nx">need_resize</span><span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span><span class="p">(</span><span class="nx">data</span><span class="p">.</span><span class="nx">streams</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">width</span> <span class="o">===</span> <span class="nx">WIDTH</span> <span class="o">&amp;&amp;</span> <span class="nx">data</span><span class="p">.</span><span class="nx">streams</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">height</span> <span class="o">===</span> <span class="nx">HEIGHT</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+  <span class="kd">var</span> <span class="nx">codec_name</span> <span class="o">=</span> <span class="nx">data</span><span class="p">.</span><span class="nx">streams</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">codec_name</span><span class="p">;</span>
+  <span class="k">if</span><span class="p">(</span><span class="nx">codec_name</span> <span class="o">===</span> <span class="s1">'png'</span> <span class="o">||</span> <span class="nx">codec_name</span> <span class="o">===</span> <span class="s1">'mjpeg'</span> <span class="o">||</span> <span class="nx">codec_name</span> <span class="o">===</span> <span class="s1">'gif'</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
+  <span class="k">else</span>
+    <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// lambda entry</span>
+<span class="nx">exports</span><span class="p">.</span><span class="nx">handler</span> <span class="o">=</span> <span class="p">(</span><span class="nx">event</span><span class="p">,</span> <span class="nx">context</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">obj_params</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="na">Key</span><span class="p">:</span> <span class="nx">unescape</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">Records</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">s3</span><span class="p">.</span><span class="nx">object</span><span class="p">.</span><span class="nx">key</span><span class="p">),</span>
+    <span class="na">Bucket</span><span class="p">:</span> <span class="nx">unescape</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">Records</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">s3</span><span class="p">.</span><span class="nx">bucket</span><span class="p">.</span><span class="nx">name</span><span class="p">)</span>
+  <span class="p">};</span>
+  <span class="nx">waterfall</span><span class="p">(</span><span class="nx">obj_params</span><span class="p">,</span> <span class="nx">callback</span><span class="p">);</span>
+<span class="p">};</span></code></pre></figure>
+
+<p><strong>tools.js</strong> // a js lib to resize images</p>
+
+<figure class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="kd">var</span> <span class="nx">gm</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'gm'</span><span class="p">).</span><span class="nx">subClass</span><span class="p">({</span> <span class="na">imageMagick</span><span class="p">:</span> <span class="kc">true</span> <span class="p">});</span>
+<span class="kd">var</span> <span class="nx">WIDTH</span> <span class="o">=</span> <span class="mi">1920</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">HEIGHT</span> <span class="o">=</span> <span class="mi">1080</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">RATIO</span> <span class="o">=</span> <span class="mf">16.0</span><span class="o">/</span><span class="mi">9</span><span class="p">;</span>
+
+<span class="c1">// dimension     ratio        scale          add bar</span>
+<span class="c1">// 1920x1080     1.78         /              /</span>
+<span class="c1">// 960x540       1.78         WIDTH/width    /</span>
+<span class="c1">// 1920x1000     1.92         WIDTH/width    bottom</span>
+<span class="c1">// 1800x1080     1.67         HEIGHT/height  right</span>
+
+<span class="kd">var</span> <span class="nx">borderFigures</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">width</span><span class="p">,</span> <span class="nx">height</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">ratio</span> <span class="o">=</span> <span class="nx">width</span> <span class="o">*</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="nx">height</span><span class="p">;</span>
+  <span class="kd">var</span> <span class="nx">percentage</span> <span class="o">=</span> <span class="nx">ratio</span> <span class="o">&gt;</span> <span class="nx">RATIO</span> <span class="p">?</span> <span class="nx">WIDTH</span> <span class="o">*</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="nx">width</span> <span class="p">:</span> <span class="nx">HEIGHT</span> <span class="o">*</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="nx">height</span><span class="p">;</span>
+  <span class="c1">// force it an even integer, simpler to add two bars on two sides</span>
+  <span class="kd">var</span> <span class="nx">scaled_width</span> <span class="o">=</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">width</span> <span class="o">*</span> <span class="nx">percentage</span><span class="p">)</span> <span class="o">+</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">width</span> <span class="o">*</span> <span class="nx">percentage</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span><span class="p">;</span>
+  <span class="kd">var</span> <span class="nx">scaled_height</span> <span class="o">=</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">height</span> <span class="o">*</span> <span class="nx">percentage</span><span class="p">)</span> <span class="o">+</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">height</span> <span class="o">*</span> <span class="nx">percentage</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span><span class="p">;</span>
+  <span class="k">return</span> <span class="p">{</span>
+    <span class="na">scaled_width</span><span class="p">:</span> <span class="nx">scaled_width</span><span class="p">,</span>
+    <span class="na">scaled_height</span><span class="p">:</span> <span class="nx">scaled_height</span><span class="p">,</span>
+    <span class="na">border_height</span><span class="p">:</span> <span class="nx">ratio</span> <span class="o">&gt;</span> <span class="nx">RATIO</span> <span class="p">?</span> <span class="p">(</span><span class="nx">HEIGHT</span><span class="o">-</span><span class="nx">scaled_height</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span> <span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="na">border_width</span><span class="p">:</span> <span class="nx">ratio</span> <span class="o">&gt;</span> <span class="nx">RATIO</span> <span class="p">?</span> <span class="mi">0</span> <span class="p">:</span> <span class="p">(</span><span class="nx">WIDTH</span><span class="o">-</span><span class="nx">scaled_width</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span>
+  <span class="p">};</span>
+<span class="p">};</span>
+
+<span class="kd">var</span> <span class="nx">getInfo</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">buffer</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="k">new</span> <span class="nb">Promise</span><span class="p">((</span><span class="nx">resolve</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+      <span class="nx">gm</span><span class="p">(</span><span class="nx">buffer</span><span class="p">)</span>
+        <span class="p">.</span><span class="nx">identify</span><span class="p">({</span> <span class="na">bufferStream</span><span class="p">:</span> <span class="kc">true</span> <span class="p">},</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">meta</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+          <span class="k">if</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">`[bordering] gm err: </span><span class="p">${</span><span class="nx">err</span><span class="p">}</span><span class="s2">`</span><span class="p">);</span>
+            <span class="nx">reject</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+          <span class="p">}</span>
+          <span class="k">else</span>
+            <span class="nx">resolve</span><span class="p">({</span>
+              <span class="na">width</span><span class="p">:</span> <span class="nx">meta</span><span class="p">.</span><span class="nx">size</span><span class="p">.</span><span class="nx">width</span><span class="p">,</span>
+              <span class="na">height</span><span class="p">:</span> <span class="nx">meta</span><span class="p">.</span><span class="nx">size</span><span class="p">.</span><span class="nx">height</span><span class="p">,</span>
+              <span class="na">format</span><span class="p">:</span> <span class="nx">meta</span><span class="p">.</span><span class="nx">format</span>
+            <span class="p">});</span>
+        <span class="p">});</span>
+  <span class="p">});</span>
+<span class="p">};</span>
+
+<span class="c1">// meta: {width, height, format}</span>
+<span class="kd">var</span> <span class="nx">resizeBuffer</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">buffer</span><span class="p">,</span> <span class="nx">meta</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="k">new</span> <span class="nb">Promise</span><span class="p">(</span><span class="nx">resolve</span> <span class="o">=&gt;</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">vars</span> <span class="o">=</span> <span class="nx">borderFigures</span><span class="p">(</span><span class="nx">meta</span><span class="p">.</span><span class="nx">width</span><span class="p">,</span> <span class="nx">meta</span><span class="p">.</span><span class="nx">height</span><span class="p">);</span>
+    <span class="nx">gm</span><span class="p">(</span><span class="nx">buffer</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">resizeExact</span><span class="p">(</span><span class="nx">vars</span><span class="p">.</span><span class="nx">scaled_width</span><span class="p">,</span> <span class="nx">vars</span><span class="p">.</span><span class="nx">scaled_height</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">borderColor</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">border</span><span class="p">(</span><span class="nx">vars</span><span class="p">.</span><span class="nx">border_width</span><span class="p">,</span> <span class="nx">vars</span><span class="p">.</span><span class="nx">border_height</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">toBuffer</span><span class="p">(</span><span class="nx">meta</span><span class="p">.</span><span class="nx">format</span><span class="p">,</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">newBuffer</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="nx">resolve</span><span class="p">(</span><span class="nx">newBuffer</span><span class="p">));</span>
+  <span class="p">});</span>
+<span class="p">}</span>
+
+<span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="na">settings</span><span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">width</span><span class="p">,</span> <span class="nx">height</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">borderFigures</span><span class="p">(</span><span class="nx">width</span><span class="p">,</span> <span class="nx">height</span><span class="p">);</span>
+  <span class="p">},</span>
+
+  <span class="na">bordering</span><span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">buffer</span><span class="p">,</span> <span class="nx">info</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// if info: {width, height, format } is known, skip the getInfo promise</span>
+    <span class="k">return</span> <span class="p">(</span><span class="nx">info</span> <span class="p">?</span> <span class="nb">Promise</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="nx">info</span><span class="p">)</span> <span class="p">:</span> <span class="nx">getInfo</span><span class="p">(</span><span class="nx">buffer</span><span class="p">))</span>
+           <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">info</span> <span class="o">=&gt;</span> <span class="nx">resizeBuffer</span><span class="p">(</span><span class="nx">buffer</span><span class="p">,</span> <span class="nx">info</span><span class="p">));</span>
+  <span class="p">},</span>
+
+  <span class="na">fitScreen</span><span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">buffer</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="k">new</span> <span class="nb">Promise</span><span class="p">((</span><span class="nx">resolve</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+      <span class="nx">gm</span><span class="p">(</span><span class="nx">buffer</span><span class="p">)</span>
+        <span class="p">.</span><span class="nx">resizeExact</span><span class="p">(</span><span class="nx">WIDTH</span><span class="p">,</span> <span class="nx">HEIGHT</span><span class="p">)</span>
+        <span class="p">.</span><span class="nx">toBuffer</span><span class="p">(</span><span class="s1">'png'</span><span class="p">,</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">newBuffer</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="nx">resolve</span><span class="p">(</span><span class="nx">newBuffer</span><span class="p">));</span>
+    <span class="p">});</span>
+  <span class="p">}</span>
+<span class="p">};</span></code></pre></figure>
+
+<h1 id="how-to-pack-the-whole-code-package">How to pack the whole code package</h1>
+
+<p><code class="highlighter-rouge">rm -rf node_modules</code></p>
+
+<p><code class="highlighter-rouge">npm install</code></p>
+
+<p>The ffprobe-statics includes the binary files for most Common OS, e.g. Windows, linux, MacOS, x64/x32, so the packed zip file is too large, as the aws lambda uses the linux(x64)</p>
+
+<p>the command to pack:</p>
+
+<figure class="highlight"><pre><code class="language-shell" data-lang="shell">zip <span class="nv">$1</span> index.js tools.js <span class="nt">-r</span> node_modules/ <span class="nt">-x</span> node_modules/ffprobe-static/bin/darwin/<span class="se">\*</span> <span class="nt">-x</span> node_modules/ffprobe-static/bin/win32/<span class="se">\*</span> <span class="nt">-x</span> node_modules/ffprobe-static/bin/linux/ia32/<span class="se">\*</span> <span class="o">&gt;</span>/dev/null</code></pre></figure>
+
+<p>the command to put the zip to s3</p>
+
+<figure class="highlight"><pre><code class="language-shell" data-lang="shell">s3cmd put deploy-1.0.0.zip s3://bucketname/lambda/deploy-1.0.0.zip</code></pre></figure>
+
+<p>set the s3 object link to be the functional code link.</p>
+
+
+  </div>
+
+</article>
+
+<script>
+var idcomments_acct = 'a20779523aff068b009d4e96dc8479bb';
+var idcomments_post_id = "/develop/2018/03/17/Image processing with AWS lambda + S3 buckets";
+var idcomments_post_url = "https://cheeger.com/develop/2018/03/17/Image-processing-with-AWS-lambda-+-S3-buckets.html";
+</script>
+<span id="IDCommentsPostTitle" style="display:none"></span>
+<script type='text/javascript' src='https://www.intensedebate.com/js/genericCommentWrapperV2.js'></script>
+
+
+      </div>
+    </div>
+
+    <footer class="site-footer">
+  <div class="wrapper">
+    <div>
+      <ul class="contact-list">
+        <li><a href="mailto:dqh725@gmail.com">
+          <span class="icon" data-icon="H"></span>
+          mail:dqh725@gmail.com</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <ul class="social-media-list">
+        
+        <li>
+          <a href="https://github.com/albahoo"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span><span class="username">albahoo</span></a>
+
+        </li>
+        
+
+        
+      </ul>
+    </div>
+
+    <div>
+      <p>LeBlanc’s law: Later equals never.</p>
+    </div>
+  </div>
+</footer>
+
+
+  </body>
+
+</html>
